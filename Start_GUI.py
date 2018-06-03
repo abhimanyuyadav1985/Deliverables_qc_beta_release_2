@@ -4,8 +4,6 @@ import sys
 
 from app_log import setup_logging
 
-# test comment 2
-
 def call_main_window():
     app = QtGui.QApplication(sys.argv)
     setup_logging()
