@@ -1,0 +1,10 @@
+#This is the file describing the logging level used for logging
+#1. DEBUG : log everything
+#2. INFO : only information and above
+#3. WARNING : only warning and above
+#4. ERROR : only error and above
+#5. CRITICIAL: only critical
+#level definition : CRITICAL > ERROR > WARNING > INFO > DEBUG
+
+
+logging_level=INFO

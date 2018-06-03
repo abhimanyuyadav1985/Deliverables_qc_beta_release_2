@@ -1,0 +1,73 @@
+ccopy_reg
+_reconstructor
+p0
+(c__main__
+DAO_table_obj
+p1
+c__builtin__
+object
+p2
+Ntp3
+Rp4
+(dp5
+S'Shipments'
+p6
+S"['shipment_entries.id', 'shipment_entries.number', 'shipment_entries.awb_no', 'shipment_entries.no_boxes']"
+p7
+sS'Deliverables_qc_dir'
+p8
+S"['deliverables_qc_dir.id', 'deliverables_qc_dir.set_number', 'deliverables_qc_dir.deliverable_id', 'deliverables_qc_dir.dir_type', 'deliverables_qc_dir.path']"
+p9
+sS'USB_files'
+p10
+S"['usb_files.id_usbf', 'usb_files.usb_label', 'usb_files.file_name', 'usb_files.set_no', 'usb_files.md5hash']"
+p11
+sS'Media_list'
+p12
+S"['media_list.t_id', 'media_list.deliverable_id', 'media_list.set_no', 'media_list.shipment_no', 'media_list.box_no', 'media_list.media_label', 'media_list.use_tag', 'media_list.reel_no']"
+p13
+sS'Project_info'
+p14
+S"['project_info.ip', 'project_info.idn', 'project_info.project', 'project_info.name', 'project_info.prefix', 'project_info.geo_contractor', 'project_info.pos_contractor', 'project_info.proc_contractor', 'project_info.project_comments', 'project_info.client_project_id', 'project_info.area', 'project_info.survey_type']"
+p15
+sS'SEGD_tapes'
+p16
+S"['tape.id', 'tape.name', 'tape.sequence_number', 'tape.first_shot_number', 'tape.first_ffid', 'tape.first_shot_time', 'tape.last_shot_number', 'tape.last_ffid', 'tape.last_shot_time', 'tape.comment']"
+p17
+sS'SEGY_QC_on_disk'
+p18
+S"['seq_segy_qc_on_disk.id_seq_segy_qc', 'seq_segy_qc_on_disk.line_name', 'seq_segy_qc_on_disk.deliverable_id', 'seq_segy_qc_on_disk.sgyt_status', 'seq_segy_qc_on_disk.sgyt_reel_no', 'seq_segy_qc_on_disk.sgyt_min_il', 'seq_segy_qc_on_disk.sgyt_max_il', 'seq_segy_qc_on_disk.sgyt_min_xl', 'seq_segy_qc_on_disk.sgyt_max_xl', 'seq_segy_qc_on_disk.sgyt_exp_uname', 'seq_segy_qc_on_disk.sgyt_unix_path', 'seq_segy_qc_on_disk.sgyt_time_stamp', 'seq_segy_qc_on_disk.segy_disk_export_status', 'seq_segy_qc_on_disk.segy_on_disk_time_stamp', 'seq_segy_qc_on_disk.segy_exporter_name', 'seq_segy_qc_on_disk.segy_on_disk_qc_run_status', 'seq_segy_qc_on_disk.segy_on_disk_qc_log_path', 'seq_segy_qc_on_disk.segy_on_disk_qc_status', 'seq_segy_qc_on_disk.segy_on_disk_qc_approver_name', 'seq_segy_qc_on_disk.segy_on_disk_qc_approval_time_stamp', 'seq_segy_qc_on_disk.ebcdic_line_name', 'seq_segy_qc_on_disk.ebcdic_reel_no', 'seq_segy_qc_on_disk.ebcdic_min_ffid', 'seq_segy_qc_on_disk.ebcdic_max_ffid', 'seq_segy_qc_on_disk.ebcdic_fgsp', 'seq_segy_qc_on_disk.ebcdic_lgsp', 'seq_segy_qc_on_disk.ebcdic_min_il', 'seq_segy_qc_on_disk.ebcdic_max_il', 'seq_segy_qc_on_disk.ebcdic_min_xl', 'seq_segy_qc_on_disk.ebcdic_max_xl', 'seq_segy_qc_on_disk.bin_reel_no', 'seq_segy_qc_on_disk.trc_min_ffid', 'seq_segy_qc_on_disk.trc_max_ffid', 'seq_segy_qc_on_disk.trc_min_sp', 'seq_segy_qc_on_disk.trc_max_sp', 'seq_segy_qc_on_disk.trc_min_il', 'seq_segy_qc_on_disk.trc_max_il', 'seq_segy_qc_on_disk.trc_min_xl', 'seq_segy_qc_on_disk.trc_max_xl', 'seq_segy_qc_on_disk.trc_min_wb', 'seq_segy_qc_on_disk.trc_min_cdpx', 'seq_segy_qc_on_disk.trc_min_cdpy', 'seq_segy_qc_on_disk.trc_max_trc_flag', 'seq_segy_qc_on_disk.trc_line_name', 'seq_segy_qc_on_disk.trc_coordinate_zero_flag', 'seq_segy_qc_on_disk.wb_zero_flag', 'seq_segy_qc_on_disk.segy_on_disk_file_path', 'seq_segy_qc_on_disk.sgyt_approver_name', 'seq_segy_qc_on_disk.sgyt_approval_time', 'seq_segy_qc_on_disk.sgyt_approval_status', 'seq_segy_qc_on_disk.sgyt_imp_exp_match_flag', 'seq_segy_qc_on_disk.sgyt_fgsp', 'seq_segy_qc_on_disk.sgyt_lgsp', 'seq_segy_qc_on_disk.sgyt_user_path', 'seq_segy_qc_on_disk.sgyt_min_ffid', 'seq_segy_qc_on_disk.sgyt_max_ffid', 'seq_segy_qc_on_disk.trace_count', 'seq_segy_qc_on_disk.segy_chksum', 'seq_segy_qc_on_disk.trc_src_min_x', 'seq_segy_qc_on_disk.trc_src_min_y', 'seq_segy_qc_on_disk.trc_rec_min_x', 'seq_segy_qc_on_disk.trc_rec_min_y', 'seq_segy_qc_on_disk.trc_min_trc_flag', 'seq_segy_qc_on_disk.trc_type_flag', 'seq_segy_qc_on_disk.header_manual_override', 'seq_segy_qc_on_disk.header_extraction_flag', 'seq_segy_qc_on_disk.ffid_match_flag', 'seq_segy_qc_on_disk.sp_match_flag', 'seq_segy_qc_on_disk.il_match_flag', 'seq_segy_qc_on_disk.xl_match_flag']"
+p19
+sS'Deliverables'
+p20
+S"['deliverables.id', 'deliverables.name', 'deliverables.class_d', 'deliverables.type', 'deliverables.media', 'deliverables.copies', 'deliverables.sgyt_master_status', 'deliverables.bin_def_status', 'deliverables.trc_def_status', 'deliverables.prod_version', 'deliverables.sgyt', 'deliverables.bin_def', 'deliverables.trc_def', 'deliverables.active_status', 'deliverables.path_sgyt', 'deliverables.path_bin_def', 'deliverables.path_trc_def', 'deliverables.reel_prefix']"
+p21
+sS'Raw_seq_info'
+p22
+S"['raw_seq_info.seq', 'raw_seq_info.real_line_name', 'raw_seq_info.preplot_name', 'raw_seq_info.first_ffid', 'raw_seq_info.first_shot', 'raw_seq_info.fg_ffid', 'raw_seq_info.fgsp', 'raw_seq_info.lg_ffid', 'raw_seq_info.lgsp', 'raw_seq_info.last_ffid', 'raw_seq_info.last_shot', 'raw_seq_info.start_data']"
+p23
+sS'change_log'
+p24
+S"['change_log.id_cl', 'change_log.type_entry', 'change_log.location', 'change_log.details', 'change_log.date', 'change_log.user_name']"
+p25
+sS'SEGY_write'
+p26
+S"['segy_write.id_segy_write', 'segy_write.id_segy_qc', 'segy_write.set_number', 'segy_write.tape_write_status', 'segy_write.tape_written_by', 'segy_write.tape_written_on', 'segy_write.tape_qc_run_status', 'segy_write.tape_sgy_name', 'segy_write.tape_qc_status', 'segy_write.tape_checked_by', 'segy_write.tape_checked_on', 'segy_write.segy_w_path']"
+p27
+sS'Line'
+p28
+S"['line.sequence_number', 'line.as_shot_line_name', 'line.real_line_name', 'line.preplot_name', 'line.approach_change', 'line.online_change', 'line.creation_time', 'line.approach_shot', 'line.approach_time', 'line.approach_position_latitude', 'line.approach_position_longitude', 'line.start_shot', 'line.start_time', 'line.start_position_latitude', 'line.start_position_longitude', 'line.end_shot', 'line.end_time', 'line.end_position_latitude', 'line.end_position_longitude', 'line.configuration_snapshot_description', 'line.is_configuration_snapshot_valid', 'line.is_configuration_snapshot_user_created', 'line.configuration_snapshot_time', 'line.target_type', 'line.start_cdp', 'line.end_cdp', 'line.wats_tile', 'line.is_undershoot', 'line.direction', 'line.source_types']"
+p29
+sS'Deliverables_data_dir'
+p30
+S"['deliverables_data_dir.id', 'deliverables_data_dir.deliverable_id', 'deliverables_data_dir.dir_type', 'deliverables_data_dir.path']"
+p31
+sS'USB_list'
+p32
+S"['usb_list.usb_id', 'usb_list.label', 'usb_list.capacity_tb', 'usb_list.serial_no']"
+p33
+sS'SEGD_qc'
+p34
+S"['segd_qc.id', 'segd_qc.seq_id', 'segd_qc.deliverable_id', 'segd_qc.set_no', 'segd_qc.qc_status', 'segd_qc.qc_log', 'segd_qc.tape_no', 'segd_qc.run_status', 'segd_qc.log_path', 'segd_qc.label_test', 'segd_qc.use_status', 'segd_qc.run_finish', 'segd_qc.line_name', 'segd_qc.f_ffid', 'segd_qc.l_ffid', 'segd_qc.missing', 'segd_qc.date_time_str', 'segd_qc.number_files']"
+p35
+sb.

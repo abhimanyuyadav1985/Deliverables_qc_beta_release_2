@@ -1,0 +1,2 @@
+#This file is used to manually override the name of the SEGY write script if it is changed by DUG for some reason
+SEGD_QC_SCRIPT=segd_tape_QC.sh
