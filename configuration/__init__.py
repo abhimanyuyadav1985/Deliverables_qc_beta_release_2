@@ -34,7 +34,7 @@ logger.addHandler(console)
 use_locations = ['Dubai','Nadia','Naila','Asima','Alima','Amani','Adira']
 #--------------------------------------------------------------------------------------
 
-deliverable_classes = ['SEGD','SEGY']
+deliverable_classes = ['SEGD','SGDM','SEGY']
 deliverable_type_list = ['SEQG','2DSTK','NFH','3DSTK','3DGATH','3DVEL','2DVEL']
 # These are used to decide the GUI class applicable to a particular deliverable type
 sequence_wise_SEGY = ['SEQG','2DSTK','NFH','2DVEL']
@@ -66,8 +66,8 @@ SEGY_tape_log_template_dict = {
 
 
 deliverables_dir= "deliverables"
-deliverable_qc_subdirs_dict = {'SEGY':['write_log'],"SEGD":['logfile']}
-data_dirs_dict = {'SEGY':['masters','headers','sample'],'SEGD':["segd.segd"]}
+deliverable_qc_subdirs_dict = {'SEGY':['write_log'],"SEGD":['logfile'], "SGDM":['logfile']}
+data_dirs_dict = {'SEGY':['masters','headers','sample'],'SEGD':["segd.segd"], "SGDM":['segd.segd']}
 
 large_file_root_dict = {'Dubai':'/node/dubai0193/large_files',
                         'Nadia':'/nadia/large_files',
