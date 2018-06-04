@@ -438,5 +438,12 @@ def get_data_for_SEGY_qc(obj, deliverable_id):
     result = obj.sess.query(obj.SEGY_QC_on_disk).filter(obj.SEGY_QC_on_disk.deliverable_id == deliverable_id).order_by(obj.SEGY_QC_on_disk.id_seq_segy_qc).all()
     return result
 
+@logger_util
+def get_seq_list_from_line_name_list(obj, line_name_list):
+    result_dict = {}
+    for a_line_name in line_name_list:
+        result_dict.update({a_line_name, obj.sess.query(obj.Raw_seq_info).filter(obj.Raw_seq_info.real_line_name == a_line_name).first()})
+    return  result_dict
+
 if __name__=="__main__":
     fetch_deliverables_list()
