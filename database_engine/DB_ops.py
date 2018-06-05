@@ -243,16 +243,15 @@ def get_segd_qc_path(obj,id,set_no):
 
 @logger_util
 def get_list_of_applicable_SEGD_tapes(obj, seq_name):
-    seq_from_raw_seq_info = obj.sess.query(obj.Raw_seq_info).filter(obj.Raw_seq_info.real_line_name == seq_name).first()
-    if seq_from_raw_seq_info == None:
-        return []
-    else:
+    tape_list = []
+    for a_seq_name in seq_name:
+        seq_from_raw_seq_info = obj.sess.query(obj.Raw_seq_info).filter(obj.Raw_seq_info.real_line_name == a_seq_name).first()
         seq_id = seq_from_raw_seq_info.seq
         tapes = obj.sess.query(obj.SEGD_tapes).filter(obj.SEGD_tapes.sequence_number == seq_id).all()
-        tape_list = []
-        for obj in tapes:
-            tape_list.append(obj.name)
-        return tape_list
+        for a_tape in tapes:
+            if a_tape not in tape_list:
+                tape_list.append(a_tape.name)
+    return tape_list
 
 @logger_util
 def get_min_max_ffid_tuple_for_tape(obj,tape_name):
