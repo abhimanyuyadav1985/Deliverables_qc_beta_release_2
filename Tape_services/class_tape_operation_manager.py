@@ -68,8 +68,6 @@ class Tape_operation_manager(object):
         self.set_no = str(set_number)
         logger.info("The tape operation service working set is now :: " + str(self.set_no))
 
-
-
     def set_deliverable(self, deliverable_name):
         self.deliverable = self.deliverable_dict[deliverable_name]
         self.dir_service.set_deliverable(self.deliverable)
