@@ -1,5 +1,8 @@
 from PyQt4 import QtGui,QtCore
 from general_functions.general_functions import create_central_labels
+from class_pop_up_message_box import pop_up_message_box
+from database_engine.DB_ops import get_seq_list_from_line_name_list
+from configuration import multiple_per_tape_list
 
 import logging
 from app_log import  stream_formatter
@@ -22,7 +25,7 @@ class SEGD_QC_Form(QtGui.QWidget):
         self.grid = QtGui.QGridLayout()
         self.setWindowTitle("SEGD QC Input form")
 
-
+        self.db_connection_obj = self.parent.tape_operation_manager.db_connection_obj
         # labels
 
         self.grid.addWidget(create_central_labels('SEGD QC Input'),0,0,1,3)
@@ -62,13 +65,10 @@ class SEGD_QC_Form(QtGui.QWidget):
         self.combo_deliverable.blockSignals(False)
         self.combo_deliverable.currentIndexChanged.connect(self.deliverable_selected)
 
-
-
-        self.combo_line = QtGui.QComboBox()
-        self.combo_line.setObjectName("Line name")
-        self.grid.addWidget(self.combo_line,4,1)
-        self.combo_line.blockSignals(True)
-        self.combo_line.currentIndexChanged.connect(self.line_selected)
+        self.combo_line = file_selection(self)
+        self.combo_line.setObjectName("File name")
+        self.combo_line.setFixedHeight(400)
+        self.grid.addWidget(self.combo_line, 4, 1, 1, 2)
 
 
         self.combo_set = QtGui.QComboBox()
@@ -93,13 +93,7 @@ class SEGD_QC_Form(QtGui.QWidget):
 
 
         self.chk_label = QtGui.QCheckBox("Label checked")
-        self.grid.addWidget(self.chk_label,9,1)
-
-
-        self.chk_noqc = QtGui.QCheckBox("Remove previoously checked")
-        self.grid.addWidget(self.chk_noqc,8,1)
-        self.chk_noqc.stateChanged.connect(self.toggle_line_list)
-
+        self.grid.addWidget(self.chk_label,8,1)
 
         self.setLayout(self.grid)
 
@@ -111,77 +105,61 @@ class SEGD_QC_Form(QtGui.QWidget):
 
 
     def deliverable_selected(self):
-        deliverable = str( self.combo_deliverable.currentText())
-        logger.info("Deliverable is set to: " + deliverable)
-        self.parent.tape_operation_manager.set_deliverable(deliverable)
-        self.combo_set.clear()
-        self.combo_set.addItems(self.parent.tape_operation_manager.get_deliverable_set_list())
-        self.combo_set.setCurrentIndex(-1)
-        self.combo_set.blockSignals(False)
+        if self.combo_deliverable.currentIndex() == -1:
+            self.set_no = None
+            self.combo_set.clear()
+            self.combo_set.setCurrentIndex(-1)
+        else:
+            deliverable = str(self.combo_deliverable.currentText())
+            self.parent.tape_operation_manager.set_deliverable(deliverable)
+            self.deliverable = deliverable
+            print "Deliverable is set to: " + deliverable
+            self.combo_set.clear()
+            self.combo_set.setCurrentIndex(-1)
+            self.combo_set.blockSignals(True)
+            self.combo_set.addItems(self.parent.tape_operation_manager.get_deliverable_set_list())
+            self.combo_set.setCurrentIndex(-1)
+            self.combo_set.blockSignals(False)
+            self.combo_line.add_dummy_widget()
+            self.combo_line.setStyleSheet('background-color: None')
+            self.update()
 
 
 
     def set_selected(self):
         if int(self.combo_set.currentIndex()) == -1:
-            self.combo_tape.clear()
-            self.combo_tape.setCurrentIndex(-1)
+            pass
         else:
             set_no = str(self.combo_set.currentText())
             self.parent.tape_operation_manager.set_working_set(set_no)
             logger.info("Set no is set to: " + str(set_no))
-            self.combo_line.clear()
-            line_list = self.parent.tape_operation_manager.service_class.get_list_of_available_segd_seq()
-            unchecked_line_list = self.parent.tape_operation_manager.service_class.get_list_of_unchecked_SEGD_seq_for_set(line_list)
-            self.sort_file_list(line_list, 'all')
-            self.sort_file_list(unchecked_line_list,'removed')
-            self.toggle_line_list()
+            file_list  = self.parent.tape_operation_manager.service_class.get_list_of_available_segd_seq()
+            file_list_removed = self.parent.tape_operation_manager.service_class.get_list_of_unchecked_SEGD_seq_for_set(file_list)
+            print file_list
+            print file_list_removed
+            self.sort_file_list(file_list, 'all')
+            self.sort_file_list(file_list_removed, 'removed')
+            self.combo_line.toggle_file_selection()
+            self.update()
 
 
     def sort_file_list(self,file_list,list_items):
-        sort_list = []
-        sort_dict = {}
-        for a_file in file_list:
-            linename = a_file
-            seq_no = int(linename[-3:])
-            sort_list.append(seq_no)
-            sort_dict.update({seq_no:a_file})
+        seq_dict = get_seq_list_from_line_name_list(self.db_connection_obj, file_list)
+        seq_sorted = sorted(seq_dict.keys())
         if list_items == 'all':
             self.line_list = []
-            for a_seq in sorted(sort_list):
-                self.line_list.append(sort_dict[a_seq])
+            for index in range(0, len(seq_sorted)):
+                self.line_list.append(seq_dict[seq_sorted[index]])
         elif list_items == 'removed':
             self.unchecked_line_list = []
-            for a_seq in sorted(sort_list):
-                self.unchecked_line_list.append(sort_dict[a_seq])
-
+            for index in range(0, len(seq_sorted)):
+                self.unchecked_line_list.append(seq_dict[seq_sorted[index]])
 
     def line_selected(self):
-        if int(self.combo_line.currentIndex()) == -1:
             self.combo_tape.clear()
-            self.combo_tape.setCurrentIndex(-1)
-        else:
-            line_name = str(self.combo_line.currentText())
-            logger.info("Line name is set to: " + line_name)
-            self.parent.tape_operation_manager.set_seq_name(line_name)
-            self.parent.tape_operation_manager.service_class.set_SEGD_path(line_name)
-            self.combo_tape.clear()
-            self.combo_tape.addItems(self.parent.tape_operation_manager.service_class.get_list_of_applicable_segd_tapes())
+            self.combo_tape.addItems(self.parent.tape_operation_manager.service_class.get_list_of_applicable_segd_tapes(file_list=self.segd_qc_line_list))
             self.combo_tape.setCurrentIndex(-1)
             self.combo_tape.blockSignals(False)
-
-    def toggle_line_list(self):
-        if self.chk_noqc.isChecked() is True:
-            self.combo_line.blockSignals(True)
-            self.combo_line.clear()
-            self.combo_line.addItems(self.unchecked_line_list)
-            self.combo_line.setCurrentIndex(-1)
-            self.combo_line.blockSignals(False)
-        else:
-            self.combo_line.blockSignals(True)
-            self.combo_line.clear()
-            self.combo_line.addItems(self.line_list)
-            self.combo_line.setCurrentIndex(-1)
-            self.combo_line.blockSignals(False)
 
 
     def tape_selected(self):
@@ -196,9 +174,8 @@ class SEGD_QC_Form(QtGui.QWidget):
         self.combo_list = [
             self.combo_tape_drive,
             self.combo_deliverable,
-            self.combo_line,
             self.combo_set,
-            self.combo_tape
+            self.combo_tape,
         ]
         combo_entry_check = True
         for a_combo in self.combo_list:
@@ -207,34 +184,158 @@ class SEGD_QC_Form(QtGui.QWidget):
                 logger.warning(str(a_combo.objectName()) + " : Is blank aborting")
 
         if combo_entry_check == True:
-            if self.chk_locked.isChecked() is True:
-                if self.chk_label.isChecked() is True:
-                    dst = str(self.combo_tape_drive.currentText())
-                    self.parent.tape_operation_manager.set_tape_drive(dst)
-                    deliverable = str(self.combo_deliverable.currentText())
-                    self.parent.tape_operation_manager.set_deliverable(deliverable)
-                    line_name = str(self.combo_line.currentText())
-                    self.parent.tape_operation_manager.set_seq_name(line_name)
-                    self.parent.tape_operation_manager.service_class.set_SEGD_path(line_name)
-                    set_no = str(self.combo_set.currentText())
-                    self.parent.tape_operation_manager.set_working_set(set_no)
-                    tape = str(self.combo_tape.currentText())
-                    self.parent.tape_operation_manager.set_tape_name(tape)
-                    self.parent.tape_operation_manager.service_class.set_logfile()
-                    # Now perform tape manual vs auto check
-                    if str(self.combo_tape.currentText()) == str(self.line_tape.text()):
-                        logger.info("Ok to run")
-                        self.parent.tape_operation_manager.service_class.run()
-                        self.close()
+            if self.file_selected == True:
+                if self.chk_locked.isChecked() is True:
+                    if self.chk_label.isChecked() is True:
+                        dst = str(self.combo_tape_drive.currentText())
+                        self.parent.tape_operation_manager.set_tape_drive(dst)
+                        deliverable = str(self.combo_deliverable.currentText())
+                        self.parent.tape_operation_manager.set_deliverable(deliverable)
+                        set_no = str(self.combo_set.currentText())
+                        self.parent.tape_operation_manager.set_working_set(set_no)
+                        # Now perform tape manual vs auto check
+                        if str(self.combo_tape.currentText()) == str(self.line_tape.text()):
+                            logger.info("Ok to run")
+                            self.parent.SEGD_QC_execute(reel_no=str(self.combo_tape.currentText()), file_list= self.segd_qc_line_list)
+                            self.close()
+                        else:
+                            logger.warning("Manual and Db entries for tape do not match")
                     else:
-                        logger.warning("Manual and Db entries for tape do not match")
+                        logger.warning("Please make sure that you have checked the label")
                 else:
-                    logger.warning("Please make sure that you have checked the label")
+                    logger.warning("Please make sure that the SEGD tape is locked !!")
             else:
-                logger.warning("Please make sure that the SEGD tape is locked !!")
+                logger.warning("Please select file 1st")
 
 
 
+class file_selection(QtGui.QWidget):
+
+    def __init__(self,parent):
+        super(file_selection,self).__init__()
+        self.parent = parent
+
+        self.grid = QtGui.QGridLayout()
+
+        self.parent.file_selected = False
+
+        self.pb_ok = QtGui.QPushButton('Confirm selection')
+        self.pb_ok.clicked.connect(self.ok_exit)
+        self.grid.addWidget(self.pb_ok, 0, 0)
+
+        self.ck_box_remove = QtGui.QCheckBox('Remove files already checked')
+        self.grid.addWidget(self.ck_box_remove, 1, 0)
+        self.ck_box_remove.stateChanged.connect(self.toggle_file_selection)
+
+        self.grid.addWidget(create_central_labels("Files"), 2, 0)
+
+        self.setLayout(self.grid)
+        self.show()
+
+
+    def add_dummy_widget(self):
+        self.working_widet = QtGui.QScrollArea()
+        self.grid.addWidget(self.working_widet,3,0)
+        self.update_routine()
+
+    def add_all_files_widget(self):
+        self.working_widget = all_files_widget(self.parent)
+        self.grid.addWidget(self.working_widget, 3, 0)
+        self.working_widget.closed.connect(self.add_unwritten_files_widget)
+        self.update_routine()
+
+    def add_unwritten_files_widget(self):
+        self.working_widet = unwritten_files_widget(self.parent)
+        self.grid.addWidget(self.working_widet, 3, 0)
+        self.working_widget.closed.connect(self.add_all_files_widget)
+        self.update_routine()
+
+    def update_routine(self):
+        self.setStyleSheet('background-color: None')
+        self.grid.update()
+        self.update()
+        self.parent.update()
+
+
+    def toggle_file_selection(self):
+        if self.ck_box_remove.isChecked() == True:
+            self.grid.itemAtPosition(3,0).widget().deleteLater()
+            self.add_unwritten_files_widget()
+        else:
+            self.grid.itemAtPosition(3, 0).widget().deleteLater()
+            self.add_all_files_widget()
+
+
+    def calculate_combined_file_size(self,return_list):
+        self.file_size = 0
+        for a_file in return_list:
+            self.file_size = self.file_size + self.parent.file_size_dict[a_file]
+
+    def ok_exit(self):
+        return_list = []
+        for i in range(len(self.btn_list)):
+            if self.btn_list[i].isChecked() is True:
+                return_list.append(str(self.btn_list[i].objectName()))
+        if len(return_list) == 0:
+            warning_message = "No file selected !!"
+            self.warning_pop_up = pop_up_message_box(warning_message, 'Warning')
+            self.warning_pop_up.show()
+        else:
+            if self.parent.parent.tape_operation_manager.deliverable.media not in multiple_per_tape_list:
+                if len(return_list) > 1:
+                    warning_message = "This deliverable media file does not support multiple files per tape, if you indend to do so, please change deliverable media type first !!"
+                    self.warning_pop_up = pop_up_message_box(warning_message, 'Warning')
+                    self.warning_pop_up.show()
+                else:
+                    self.parent.segd_qc_line_list = return_list
+                    self.setStyleSheet('background-color: green')
+                    self.parent.file_selected = True
+                    self.parent.line_selected()
+            else:
+                self.parent.segd_qc_line_list = return_list
+                self.setStyleSheet('background-color: green')
+                self.parent.file_selected = True
+                self.parent.line_selected()
+
+
+
+class all_files_widget(QtGui.QScrollArea):
+    closed = QtCore.pyqtSignal()
+    def __init__(self,parent):
+        super(all_files_widget, self).__init__()
+        self.parent = parent
+        self.grid = QtGui.QGridLayout()
+        self.widget  = QtGui.QWidget()
+        i = 0
+        self.parent.combo_line.btn_list = []
+        for a_file in self.parent.line_list:
+            btn = QtGui.QCheckBox(a_file)
+            btn.setObjectName(a_file)
+            self.grid.addWidget(btn, i, 0)
+            self.parent.combo_line.btn_list.append(btn)
+            i = i + 1
+        self.widget.setLayout(self.grid)
+        self.setWidget(self.widget)
+
+
+
+class unwritten_files_widget(QtGui.QScrollArea):
+    closed = QtCore.pyqtSignal()
+    def __init__(self,parent):
+        super(unwritten_files_widget, self).__init__()
+        self.parent = parent
+        self.grid = QtGui.QGridLayout()
+        i = 0
+        self.parent.combo_line.btn_list = []
+        self.widget = QtGui.QWidget()
+        for a_file in self.parent.unchecked_line_list:
+            btn = QtGui.QCheckBox(a_file)
+            btn.setObjectName(a_file)
+            self.grid.addWidget(btn, i, 0)
+            self.parent.combo_line.btn_list.append(btn)
+            i = i + 1
+        self.widget.setLayout(self.grid)
+        self.setWidget(self.widget)
 
 
 
