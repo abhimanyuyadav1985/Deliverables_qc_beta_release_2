@@ -88,7 +88,7 @@ SEGD_Tape_log_template = 'SEGD_Tape_log.xlsx'
 change_log_report_template = 'change_delete_log.xlsx'
 
 #----Top window----------------
-version = "_B_20171002.2"
+version = "_B_20180608.1"
 config_check = False
 default_use_env = ""
 echo_mode = False
