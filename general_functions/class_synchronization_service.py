@@ -70,7 +70,7 @@ class Synchronization_service(object):
         """
         logger.info("Now doing statup diagnostic ... ")
         self.check_all_deliverable_dir_and_db_entries()
-        self.sync_media_list()
+        #self.sync_media_list()
         self.SEGD_QC_sync()
         self.sync_segy_file_size()
         logger.info("Startup diagnostic now complete ")
@@ -179,7 +179,7 @@ class Synchronization_service(object):
         orca_tape_name_list = []
         for orca_tape in SEGD_tape_obj_list:
             orca_tape_name_list.append(orca_tape.name)
-        available_SEG_log_files_dict = {}
+        #3. looping over all the SEGD deliverables
         for deliverable in segd_deliverables_list:
             self.dir_service.set_deliverable(deliverable)
             for set_no in self.dir_service.qc_dir_path_dict.keys():
@@ -191,54 +191,44 @@ class Synchronization_service(object):
                     available_files_list = fetch_directory_content_list(self.DUG_connection_obj,cmd)
                     tape_log_run_dict = {}
                     for file_name in available_files_list:
-                        tape_label = file_name.split("--")[1]
-                        dict_item =  [posixpath.join(path,file_name),file_name.split("--")[0]]
+                        tape_label = file_name.split("--")[0]
+                        dict_item =  posixpath.join(path,file_name)
                         dict_entry = {tape_label:dict_item}
                         tape_log_run_dict.update(dict_entry)
                     # check previous state
                     run_tape_obj_list =  check_previous_run_for_SEGD_qc(self.db_connection_obj,deliverable.id,set_no)
                     run_tape_list_id_set = []
                     for tape in run_tape_obj_list:
-                        run_tape_list_id_set.append(tape.tape_no)
+                        if tape not in run_tape_list_id_set:
+                            run_tape_list_id_set.append(tape.tape_no)
+                    # check previous passed state
                     passed_tape_obj_list = check_previous_passed_for_SEGD_qc(self.db_connection_obj,deliverable.id,set_no)
                     passed_tape_list_for_id_set = []
                     for tape in passed_tape_obj_list:
-                        passed_tape_list_for_id_set.append(tape.tape_no)
+                        if tape not in  passed_tape_list_for_id_set:
+                            passed_tape_list_for_id_set.append(tape.tape_no)
+                    # Now sync old and new extries as needed
                     for orca_tape in orca_tape_name_list:
                         if orca_tape in passed_tape_list_for_id_set:
                             pass  # do nothing if the tape has already passed QC check
                         else:
-                            if orca_tape in tape_log_run_dict.keys():
+                            if orca_tape in tape_log_run_dict.keys(): # check if the log exists 1st no point going ahead if the log does not exist for the tape, maybe the SEGD QC was not run yet
                                 # check if a previous db entry exists
-                                SEGD_qc = self.db_connection_obj.sess.query(self.db_connection_obj.SEGD_qc).filter(self.db_connection_obj.SEGD_qc.log_path == tape_log_run_dict[orca_tape][0] ).first()
-                                if SEGD_qc is None:
-                                    SEGD_qc = self.db_connection_obj.SEGD_qc()
-                                    SEGD_qc.tape_no =  orca_tape
-                                    SEGD_qc.seq_id = fetch_seq_id_from_name(self.db_connection_obj,tape_log_run_dict[orca_tape][1])
-                                    SEGD_qc.deliverable_id = deliverable.id
-                                    SEGD_qc.set_no = set_no
-                                    SEGD_qc.log_path = tape_log_run_dict[orca_tape][0]
-                                    qc_log = self.file_service.return_encoded_string(SEGD_qc.log_path)
-                                    SEGD_qc.qc_status = get_SEGD_QC_status(self.DUG_connection_obj, SEGD_qc.log_path )
-                                    SEGD_qc.run_status = True
-                                    SEGD_qc.label_test = True
-                                    SEGD_qc.use_status = True
-                                    SEGD_qc.run_finish = get_SEGD_QC_run_finish_status(self.DUG_connection_obj, SEGD_qc.log_path)
+                                SEGD_qc = self.db_connection_obj.sess.query(self.db_connection_obj.SEGD_qc).filter(self.db_connection_obj.SEGD_qc.log_path == tape_log_run_dict[orca_tape]).first()
+                                if SEGD_qc is None: # if no DB  entry was found for this logpath follow this step
+                                    log_path = tape_log_run_dict[orca_tape] # set the log path to the log path to the tape
+                                    qc_log = self.file_service.return_encoded_string(log_path) # get the QC log for the path
                                     #Add the new fields necessary for report creation
                                     x = qc_log.decode('base64')
                                     for line in x.split('\n'):
+                                        if 'Tape QC successful:' in line:
+                                            files_list = (line.split(': ')[1]).split(' ')
                                         if "First FFID   :" in line:
-                                            SEGD_qc.f_ffid = line.split(': ')[1]
+                                            f_ffid_list = (line.split(': ')[1]).split(' ')
                                         elif 'Last  FFID' in line:
-                                            SEGD_qc.l_ffid = line.split(': ')[1]
-                                        elif "Missing files" in line:
-                                            missing_files = line.split(': ')[1]
-                                            if missing_files == "":
-                                                SEGD_qc.missing = 0
-                                            else:
-                                                SEGD_qc.missing = int(missing_files)
+                                            l_ffid_list = (line.split(': ')[1]).split(' ')
                                         elif "Files QC'd" in line:
-                                                SEGD_qc.number_files = line.split(': ')[1]
+                                                number_files_list = (line.split(': ')[1]).split(' ')
                                         elif "Total time:" in line:
                                             date_str = ""
                                             for item in line.split("  ")[0].split(" ")[1:6]:
@@ -250,52 +240,77 @@ class Synchronization_service(object):
                                                     date_str = date_str + " " + str(item)
                                                 else:
                                                     date_str = date_str + " " + str(item)
-                                            SEGD_qc.date_time_str = date_str
-                                        SEGD_qc.line_name = tape_log_run_dict[orca_tape][1]
-                                    add_SEGD_QC_obj(self.db_connection_obj,SEGD_qc)
-                                else:
-                                    SEGD_qc.tape_no = orca_tape
-                                    SEGD_qc.seq_id = fetch_seq_id_from_name(self.db_connection_obj,
-                                                                            tape_log_run_dict[orca_tape][1])
-                                    SEGD_qc.deliverable_id = deliverable.id
-                                    SEGD_qc.set_no = set_no
-                                    SEGD_qc.log_path = tape_log_run_dict[orca_tape][0]
-                                    qc_log = self.file_service.return_encoded_string(SEGD_qc.log_path)
-                                    SEGD_qc.qc_status = get_SEGD_QC_status(self.DUG_connection_obj, SEGD_qc.log_path)
-                                    SEGD_qc.run_status = True
-                                    SEGD_qc.label_test = True
-                                    SEGD_qc.use_status = True
-                                    SEGD_qc.run_finish = get_SEGD_QC_run_finish_status(self.DUG_connection_obj,
-                                                                                       SEGD_qc.log_path)
-
-                                    x = qc_log.decode('base64')
-                                    for line in x.split('\n'):
-                                        if "First FFID   :" in line:
-                                            SEGD_qc.f_ffid = line.split(': ')[1]
-                                        elif 'Last  FFID' in line:
-                                            SEGD_qc.l_ffid = line.split(': ')[1]
-                                        elif "Missing files" in line:
-                                            missing_files = line.split(': ')[1]
-                                            if missing_files == "":
-                                                SEGD_qc.missing = 0
-                                            else:
-                                                SEGD_qc.missing = int(missing_files)
-                                        elif "Files QC'd" in line:
-                                            SEGD_qc.number_files = line.split(': ')[1]
-                                        elif "Total time:" in line:
-                                            date_str = ""
-                                            for item in line.split("  ")[0].split(" ")[1:6]:
-                                                if item == "UTC":
-                                                    pass
-                                                elif ":" in item:
-                                                    item_a = item.split(":")
-                                                    item = item_a[0] + ":" + item_a[1]
-                                                    date_str = date_str + " " + str(item)
-                                                else:
-                                                    date_str = date_str + " " + str(item)
-                                            SEGD_qc.date_time_str = date_str
-                                        SEGD_qc.line_name = tape_log_run_dict[orca_tape][1]
-                                    self.db_connection_obj.sess.commit()
+                                    print files_list
+                                    for i in range(0,len(files_list)):
+                                        #print i
+                                        SEGD_qc = self.db_connection_obj.SEGD_qc()
+                                        SEGD_qc.tape_no = orca_tape
+                                        file_path = files_list[i].rstrip()
+                                        #print file_path.split('/')[-1]
+                                        SEGD_qc.line_name = file_path.split('/')[-1]
+                                        SEGD_qc.seq_id = fetch_seq_id_from_name(self.db_connection_obj,
+                                                                                SEGD_qc.line_name)
+                                        SEGD_qc.deliverable_id = deliverable.id
+                                        SEGD_qc.set_no = set_no
+                                        SEGD_qc.log_path = tape_log_run_dict[orca_tape]
+                                        SEGD_qc.qc_status = get_SEGD_QC_status(self.DUG_connection_obj,
+                                                                               SEGD_qc.log_path)
+                                        SEGD_qc.run_status = True
+                                        SEGD_qc.label_test = True
+                                        SEGD_qc.use_status = True
+                                        SEGD_qc.run_finish = True
+                                        SEGD_qc.date_time_str = date_str
+                                        SEGD_qc.f_ffid = f_ffid_list[i]
+                                        SEGD_qc.l_ffid = l_ffid_list[i]
+                                        SEGD_qc.missing = 0
+                                        SEGD_qc.number_files = number_files_list[i]
+                                        add_SEGD_QC_obj(self.db_connection_obj,SEGD_qc)
+                                        self.db_connection_obj.sess.commit()
+                                else: # looks like this log path appears in the list, this means the sync service has gone through this before
+                                    SEGD_qc_list = self.db_connection_obj.sess.query(self.db_connection_obj.SEGD_qc).filter(
+                                        self.db_connection_obj.SEGD_qc.log_path == tape_log_run_dict[orca_tape]).all()
+                                    for SEGD_qc in SEGD_qc_list:
+                                        log_path = tape_log_run_dict[orca_tape]  # set the log path to the log path to the tape
+                                        qc_log = self.file_service.return_encoded_string(log_path)  # get the QC log for the path
+                                        # Add the new fields necessary for report creation
+                                        x = qc_log.decode('base64')
+                                        for line in x.split('\n'):
+                                            if 'Tape QC successful:' in line:
+                                                files_list = (line.split(': ')[1]).split(' ')
+                                            if "First FFID   :" in line:
+                                                f_ffid_list = (line.split(': ')[1]).split(' ')
+                                            elif 'Last  FFID' in line:
+                                                l_ffid_list = (line.split(': ')[1]).split(' ')
+                                            elif "Files QC'd" in line:
+                                                number_files_list = (line.split(': ')[1]).split(' ')
+                                            elif "Total time:" in line:
+                                                date_str = ""
+                                                for item in line.split("  ")[0].split(" ")[1:6]:
+                                                    if item == "UTC":
+                                                        pass
+                                                    elif ":" in item:
+                                                        item_a = item.split(":")
+                                                        item = item_a[0] + ":" + item_a[1]
+                                                        date_str = date_str + " " + str(item)
+                                                    else:
+                                                        date_str = date_str + " " + str(item)
+                                        # create a dict for sequence and other things associated with it
+                                        dict_to_update = {}
+                                        for i in range(0,len(files_list)):
+                                            dict_to_update.update({files_list[i]:[f_ffid_list[i], l_ffid_list[i], number_files_list[i]]})
+                                        #Now update the object
+                                        SEGD_qc.qc_status = get_SEGD_QC_status(self.DUG_connection_obj,
+                                                                               SEGD_qc.log_path)
+                                        SEGD_qc.run_finish = True
+                                        SEGD_qc.run_status = True
+                                        SEGD_qc.label_test = True
+                                        SEGD_qc.use_status = True
+                                        SEGD_qc.date_time_str = date_str
+                                        SEGD_qc.f_ffid = dict_to_update[SEGD_qc.line_name][0]
+                                        SEGD_qc.l_ffid = dict_to_update[SEGD_qc.line_name][1]
+                                        SEGD_qc.missing = 0
+                                        SEGD_qc.number_files = dict_to_update[SEGD_qc.line_name][2]
+                                        self.db_connection_obj.sess.commit()
         logger.info('SEGD QC sync finished')
 
 
