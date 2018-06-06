@@ -194,7 +194,7 @@ class SEGD_QC_Form(QtGui.QWidget):
                         # Now perform tape manual vs auto check
                         if str(self.combo_tape.currentText()) == str(self.line_tape.text()):
                             logger.info("Ok to run")
-                            self.parent.SEGD_QC_execute(reel_no=reel_no, file_list= self.segd_qc_line_list, deliverable= deliverable, drive=dst, set=set_no)
+                            self.parent.SEGD_QC_execute(reel_no=reel_no, file_list= self.segd_qc_line_list, deliverable= deliverable, drive=dst, set=set_no, split_line = self.split_line)
                             self.close()
                         else:
                             logger.warning("Manual and Db entries for tape do not match")
@@ -285,11 +285,13 @@ class file_selection(QtGui.QWidget):
                     self.warning_pop_up = pop_up_message_box(warning_message, 'Warning')
                     self.warning_pop_up.show()
                 else:
+                    self.parent.split_line = True
                     self.parent.segd_qc_line_list = return_list
                     self.setStyleSheet('background-color: green')
                     self.parent.file_selected = True
                     self.parent.line_selected()
             else:
+                self.parent.split_line = False
                 self.parent.segd_qc_line_list = return_list
                 self.setStyleSheet('background-color: green')
                 self.parent.file_selected = True
