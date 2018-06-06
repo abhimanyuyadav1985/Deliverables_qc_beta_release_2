@@ -120,14 +120,17 @@ class Tape_drive_dashboard(QtGui.QWidget):
         self.pop_up_combo_box.closed.connect(self.show)
         self.pop_up_combo_box.show()
 
-
+###########################################################################################################
     def segd_qc(self):
         self.SEGD_QC_form = SEGD_QC_Form(self)
         self.SEGD_QC_form.setMinimumHeight(200)
         self.SEGD_QC_form.setMinimumWidth(100)
         self.SEGD_QC_form.show()
 
+    def SEGD_QC_execute(self, reel_no, file_list, deliverable, drive, set):
+        self.tape_operation_manager.service_class.setup_execution(reel_no=reel_no,file_list=file_list,deliverable=deliverable, drive=drive, set=set)
 
+############################################################################################################
     def segy_write(self):
         self.SEGY_write_form = segy_write_multiple(self)
         self.SEGY_write_form.setMinimumWidth(400)
