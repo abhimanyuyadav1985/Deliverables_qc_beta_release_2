@@ -103,7 +103,6 @@ class SEGD_QC_Form(QtGui.QWidget):
         logger.info("Setting tape drive to: " + dst)
 
 
-
     def deliverable_selected(self):
         if self.combo_deliverable.currentIndex() == -1:
             self.set_no = None
@@ -135,8 +134,6 @@ class SEGD_QC_Form(QtGui.QWidget):
             logger.info("Set no is set to: " + str(set_no))
             file_list  = self.parent.tape_operation_manager.service_class.get_list_of_available_segd_seq()
             file_list_removed = self.parent.tape_operation_manager.service_class.get_list_of_unchecked_SEGD_seq_for_set(file_list)
-            print file_list
-            print file_list_removed
             self.sort_file_list(file_list, 'all')
             self.sort_file_list(file_list_removed, 'removed')
             self.combo_line.toggle_file_selection()
