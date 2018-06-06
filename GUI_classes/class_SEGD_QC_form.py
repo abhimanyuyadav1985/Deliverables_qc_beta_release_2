@@ -188,15 +188,13 @@ class SEGD_QC_Form(QtGui.QWidget):
                 if self.chk_locked.isChecked() is True:
                     if self.chk_label.isChecked() is True:
                         dst = str(self.combo_tape_drive.currentText())
-                        self.parent.tape_operation_manager.set_tape_drive(dst)
                         deliverable = str(self.combo_deliverable.currentText())
-                        self.parent.tape_operation_manager.set_deliverable(deliverable)
                         set_no = str(self.combo_set.currentText())
-                        self.parent.tape_operation_manager.set_working_set(set_no)
+                        reel_no = str(self.combo_tape.currentText())
                         # Now perform tape manual vs auto check
                         if str(self.combo_tape.currentText()) == str(self.line_tape.text()):
                             logger.info("Ok to run")
-                            self.parent.SEGD_QC_execute(reel_no=str(self.combo_tape.currentText()), file_list= self.segd_qc_line_list)
+                            self.parent.SEGD_QC_execute(reel_no=reel_no, file_list= self.segd_qc_line_list, deliverable= deliverable, drive=dst, set=set_no)
                             self.close()
                         else:
                             logger.warning("Manual and Db entries for tape do not match")
