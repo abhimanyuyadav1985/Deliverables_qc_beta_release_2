@@ -149,11 +149,10 @@ class db_connection_obj(object):
         try:
 
             self.Base_orca = automap_base(metadata = self.metadata_orca)
-            self.Base_deliverables_qc = automap_base(metadata=self.metadata_deliverables_qc)
-            self.Base_public = automap_base(metadata = self.metadta_public)
-
             self.Base_orca.prepare(self.db_engine, reflect=True)
+            self.Base_deliverables_qc = automap_base(metadata=self.metadata_deliverables_qc)
             self.Base_deliverables_qc.prepare(self.db_engine, reflect=True)
+            self.Base_public = automap_base(metadata = self.metadta_public)
             self.Base_public.prepare(self.db_engine, reflect = True)
 
 
@@ -168,6 +167,8 @@ class db_connection_obj(object):
         except Exception as error:
             logger.error(error)
 
+
+    @logger_util
     def initialize_dao_deliverables_definition(self):
         self.Deliverables_def = Table('deliverables',self.metadata_deliverables_qc,autoload = True,autoload_with =self.db_engine)
 
