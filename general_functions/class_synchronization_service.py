@@ -69,10 +69,12 @@ class Synchronization_service(object):
 
         """
         logger.info("Now doing statup diagnostic ... ")
-        self.check_all_deliverable_dir_and_db_entries()
-        #self.sync_media_list()
-        self.SEGD_QC_sync()
-        self.sync_segy_file_size()
+
+        # self.check_all_deliverable_dir_and_db_entries()
+        # self.SEGD_QC_sync()
+        # self.sync_segy_file_size()
+
+        # self.sync_media_list()
         logger.info("Startup diagnostic now complete ")
 
     def sync_segy_file_size(self):
@@ -240,7 +242,6 @@ class Synchronization_service(object):
                                                     date_str = date_str + " " + str(item)
                                                 else:
                                                     date_str = date_str + " " + str(item)
-                                    print files_list
                                     for i in range(0,len(files_list)):
                                         #print i
                                         SEGD_qc = self.db_connection_obj.SEGD_qc()
@@ -297,7 +298,10 @@ class Synchronization_service(object):
                                         # create a dict for sequence and other things associated with it
                                         dict_to_update = {}
                                         for i in range(0,len(files_list)):
-                                            dict_to_update.update({files_list[i]:[f_ffid_list[i], l_ffid_list[i], number_files_list[i]]})
+                                            file_path = files_list[i].rstrip()
+                                            # print file_path.split('/')[-1]
+                                            line_name = file_path.split('/')[-1]
+                                            dict_to_update.update({line_name:[f_ffid_list[i], l_ffid_list[i], number_files_list[i]]})
                                         #Now update the object
                                         SEGD_qc.qc_status = get_SEGD_QC_status(self.DUG_connection_obj,
                                                                                SEGD_qc.log_path)
