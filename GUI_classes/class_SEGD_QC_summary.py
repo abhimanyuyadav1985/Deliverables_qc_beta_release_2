@@ -91,18 +91,17 @@ class SEGD_QC_summary(QtGui.QScrollArea):
             i = i + int(deliverable.copies) * 3
         self.total_widget_width = i + 2
 
+    def get_applicable_tapes(self):
+        self.tape_list = get_all_available_segd_tapes_in_orca(self.db_connection_obj)
+
     def add_tape_sequence_labels(self):
         rv_dict = {}  # row values for SEG QC entries
         for i in range(0,len(self.tape_list)):
             seq_name = fetch_seq_name_from_id(self.db_connection_obj,self.tape_list[i].sequence_number)
             self.grid.addWidget(create_center_data(self.tape_list[i].name),i+4,1,1,1)
             self.grid.addWidget(create_center_data(seq_name), i + 4, 0, 1, 1)
-            rv_dict.update({self.tape_list[i].name:i+4})
+            rv_dict.update({(self.tape_list[i].name, self.tape_list[i].sequence_number):i+4})
         self.rv_dict = rv_dict
-
-    def get_applicable_tapes(self):
-        self.tape_list = get_all_available_segd_tapes_in_orca(self.db_connection_obj)
-
 
     def get_all_SEGD_qc_entries(self):
         self.db_segd_qc_entry_list = get_all_SEGD_qc_entries(self.db_connection_obj)
@@ -112,21 +111,20 @@ class SEGD_QC_summary(QtGui.QScrollArea):
         db_entry_reference_dict = {}
         db_entry_plot_dict = {}
         for db_entry in self.db_segd_qc_entry_list:
-            db_entry_reference_dict.update({(db_entry.tape_no, db_entry.deliverable_id, db_entry.set_no):db_entry})
+            db_entry_reference_dict.update({(db_entry.tape_no, db_entry.deliverable_id, db_entry.set_no, db_entry.seq_id):db_entry})
         for tape in self.tape_list:
             for deliverable in self.deliverables_list:
                 for i in range(1,int(deliverable.copies)+1):
-                    key = (tape.name,deliverable.id,i)
+                    key = (tape.name,deliverable.id,i,tape.sequence_number)
                     if key in db_entry_reference_dict.keys():
                         pass
                     else:
                         db_entry_reference_dict.update({key: None})
         for key in db_entry_reference_dict.keys():
             if db_entry_reference_dict[key] is not None:
-
                 if str(db_entry_reference_dict[key].run_finish) == 'True':
                     db_entry = db_entry_reference_dict[key]
-                    rp = self.rv_dict[db_entry.tape_no]
+                    rp = self.rv_dict[(db_entry.tape_no,db_entry.seq_id)]
                     self.grid.addWidget(decide_and_create_label(db_entry.run_status),rp,int(self.cv_dict[db_entry.deliverable_id][db_entry.set_no]['Run']))
                     pb = QtGui.QPushButton(str(db_entry.qc_status))
                     obj_name = str(db_entry.tape_no +"-" +str(db_entry.set_no))
@@ -143,14 +141,14 @@ class SEGD_QC_summary(QtGui.QScrollArea):
                                         int(self.cv_dict[db_entry.deliverable_id][db_entry.set_no]['Prod']))
                 else:
                     db_entry = db_entry_reference_dict[key]
-                    rp = self.rv_dict[db_entry.tape_no]
+                    rp = self.rv_dict[(db_entry.tape_no,db_entry.seq_id)]
                     self.grid.addWidget(decide_and_create_label('True'), rp,
                                         int(self.cv_dict[db_entry.deliverable_id][db_entry.set_no]['Prod']))
                     self.grid.addWidget(decide_and_create_label('Running'), rp,
                                         int(self.cv_dict[db_entry.deliverable_id][db_entry.set_no]['Run']))
 
             else:
-                rp = self.rv_dict[key[0]]
+                rp = self.rv_dict[key[0], key[3]]
                 self.grid.addWidget(decide_and_create_label('Ready'), rp,
                                     int(self.cv_dict[key[1]][key[2]]['Run']))
                 self.grid.addWidget(decide_and_create_label('True'), rp,
