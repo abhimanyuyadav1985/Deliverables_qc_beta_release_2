@@ -39,7 +39,13 @@ def create_sgyt(deliverable,sequence,IL_range,XL_range,reel):
         #modify the items in quotations to change substitutions
         ebcdic = ebcdic.replace('ABCDEFGHIJKLMNOP', sequence.real_line_name)
         ebcdic = ebcdic.replace('FGSP-LGSP', '{0:04d}-{1:04d}'.format(int(sequence.fgsp), int(sequence.lgsp)))
-        ebcdic = ebcdic.replace('SSS', '{0:03d}'.format(int(sequence.seq)))
+        if len(str(sequence.seq)) == 3:
+            ebcdic = ebcdic.replace('SSS', '{0:03d}'.format(int(sequence.seq)))
+        elif len(str(sequence.seq)) == 4:
+            ebcdic = ebcdic.replace('SSSS', '{0:04d}'.format(int(sequence.seq)))
+        elif len(str(sequence.seq)) == 5:
+            ebcdic = ebcdic.replace('SSSSS', '{0:05d}'.format(int(sequence.seq)))
+
         ebcdic = ebcdic.replace('DD-MM-YYYY', str(sequence.start_data))
         ebcdic = ebcdic.replace('FFID-LFID','{0:04d}-{1:04d}'.format(int(sequence.fg_ffid), int(sequence.lg_ffid)))
         # ebcdic = ebcdic.replace('mnXL-mxXL', '{:>4}-{:>4}'.format(XL_range[0], XL_range[1]))
@@ -65,10 +71,10 @@ def create_sgyt(deliverable,sequence,IL_range,XL_range,reel):
                 if lino_done:
                     pass
                 else:
-                    s = '    lino {0:s} '.format(sequence.preplot_name[-4:])
+                    s = '    lino {0:s} '.format(sequence.preplot_name[-len(str(sequence.preplot_name)):])
                     lino_done = True
-            if 'reno' in s:
-                s = '    reno ' + str(int(reel))
+            #if 'reno' in s:
+                #s = '    reno ' + str(int(reel))
 
             print >> fout, s
 
@@ -131,7 +137,8 @@ def create_3D_sgyt(deliverable,IL_range,XL_range,reel):
 
         for s in a:
             if 'reno' in s:
-                s = '    reno ' + str(int(reel))
+                #s = '    reno ' + str(int(reel))
+                pass
 
             print >> fout, s
 
