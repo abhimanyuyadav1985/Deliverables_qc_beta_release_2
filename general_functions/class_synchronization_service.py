@@ -70,11 +70,11 @@ class Synchronization_service(object):
         """
         logger.info("Now doing statup diagnostic ... ")
 
-        # self.check_all_deliverable_dir_and_db_entries()
-        # self.SEGD_QC_sync()
-        # self.sync_segy_file_size()
+        self.check_all_deliverable_dir_and_db_entries()
+        self.SEGD_QC_sync()
+        self.sync_segy_file_size()
 
-        # self.sync_media_list()
+        self.sync_media_list()
         logger.info("Startup diagnostic now complete ")
 
     def sync_segy_file_size(self):
@@ -222,6 +222,7 @@ class Synchronization_service(object):
                                     qc_log = self.file_service.return_encoded_string(log_path) # get the QC log for the path
                                     #Add the new fields necessary for report creation
                                     x = qc_log.decode('base64')
+                                    files_list = []
                                     for line in x.split('\n'):
                                         if 'Tape QC successful:' in line:
                                             files_list = (line.split(': ')[1]).split(' ')
@@ -275,6 +276,7 @@ class Synchronization_service(object):
                                         qc_log = self.file_service.return_encoded_string(log_path)  # get the QC log for the path
                                         # Add the new fields necessary for report creation
                                         x = qc_log.decode('base64')
+                                        files_list = []
                                         for line in x.split('\n'):
                                             if 'Tape QC successful:' in line:
                                                 files_list = (line.split(': ')[1]).split(' ')
