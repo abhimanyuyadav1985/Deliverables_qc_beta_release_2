@@ -224,21 +224,30 @@ class SEGD_tool_window(QtGui.QScrollArea):
     def create_tape_log_entry_obj_list(self):
         obj = self.db_connection_obj # simply to make the code shorter
         tape_log_entry_list = []
+
         tape_list = obj.sess.query(obj.SEGD_tapes).all()
-        seq_info_list = obj.sess.query(obj.Line).all()
+        seq_info_list = obj.sess.query(obj.Raw_seq_info).all()
+
         seq_dict = {}
+
         for seq_entry in seq_info_list:
-            key = str(seq_entry.sequence_number)
+            key = str(seq_entry.seq)
             data = seq_entry
             seq_dict.update({key:data})
+
         tape_dict = {}
+
         for tape in tape_list:
-            key = tape.name
+            key = (tape.name,tape.sequence_number)
             data = tape
             tape_dict.update({key:data})
+
         media_list = obj.sess.query(obj.Media_list).filter(obj.Media_list.deliverable_id == self.deliverable.id).all()
+
         for media in media_list:
-            tape_log_entry_list.append(Tape_log_entry(media,tape_dict[media.reel_no],seq_dict[str(tape_dict[media.reel_no].sequence_number)]))
+            for key in tape_dict.keys():
+                if media.reel_no == key[0]:
+                    tape_log_entry_list.append(Tape_log_entry(media,tape_dict[key],seq_dict[str(tape_dict[key].sequence_number)]))
 
         return tape_log_entry_list
 
