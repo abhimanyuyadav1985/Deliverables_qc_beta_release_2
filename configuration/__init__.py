@@ -88,7 +88,7 @@ SEGD_Tape_log_template = 'SEGD_Tape_log.xlsx'
 change_log_report_template = 'change_delete_log.xlsx'
 
 #----Top window----------------
-version = "_B_20180621.1"
+version = "_B_20180814.1"
 config_check = False
 default_use_env = ""
 echo_mode = False
@@ -161,8 +161,8 @@ def get_segy_write_script():
 segy_write_script = get_segy_write_script()
 
 #--------------------------------Use mode selection ----------------------
-use_mode = "Demo"
-#use_mode = 'Production'
+#use_mode = "Demo"
+use_mode = 'Production'
 
 config_check = False
 if use_mode == "Demo":
