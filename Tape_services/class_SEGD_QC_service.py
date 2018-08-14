@@ -66,7 +66,10 @@ class SEGD_QC_service(object):
     def set_SEGD_path(self):
         self.SEGD_path_string = ''
         for i in range(0,len(self.file_list)):
-            self.SEGD_path_string = self.SEGD_path_string + ' ' + posixpath.join(self.parent.dir_service.data_dir_path_dict['segd.segd'],self.file_list[i])
+            if i == len(self.file_list) -1:
+                self.SEGD_path_string = self.SEGD_path_string + posixpath.join(self.parent.dir_service.data_dir_path_dict['segd.segd'], self.file_list[i])
+            else:
+                self.SEGD_path_string = self.SEGD_path_string + posixpath.join(self.parent.dir_service.data_dir_path_dict['segd.segd'],self.file_list[i]) + ','
         logger.info("The SEGD data directory set")
 
     def set_logfile(self):
