@@ -441,8 +441,11 @@ def get_data_for_SEGY_qc(obj, deliverable_id):
 def get_seq_list_from_line_name_list(obj, line_name_list):
     result_dict = {}
     for a_line_name in line_name_list:
-        raw_seq_obj = obj.sess.query(obj.Raw_seq_info).filter(obj.Raw_seq_info.real_line_name == str(a_line_name)).first()
-        result_dict.update({raw_seq_obj.seq : a_line_name})
+        try:
+            raw_seq_obj = obj.sess.query(obj.Raw_seq_info).filter(obj.Raw_seq_info.real_line_name == str(a_line_name)).first()
+            result_dict.update({raw_seq_obj.seq : a_line_name})
+        except:
+            pass
     #print result_dict
     return  result_dict
 
