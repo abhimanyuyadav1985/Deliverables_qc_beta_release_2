@@ -1,6 +1,6 @@
 import os
 from database_engine.DB_ops import get_list_of_SEGY_deliverables
-from GUI_classes.class_pop_up_combo_box import pop_up_combo_box
+from GUI_classes.class_pop_up_combo_box import pop_up_combo_box, file_selection
 from GUI_classes.class_pop_up_message_box import pop_up_message_box
 from general_functions.class_deliverables_dir_service_through_db import deliverable_dir_service_through_db
 from general_functions.class_deliverables_file_service import deliverable_file_service
@@ -12,7 +12,7 @@ from dug_ops.DUG_ops import check_generic_path, SFTP_generic_file
 from dug_ops.DUG_ops import fetch_directory_content_list, append_register_entry
 from general_functions.general_functions import change_log_creation
 import datetime
-from configuration import use_mode,get_segy_write_script,sequence_wise_SEGY, SEGY_3D
+from configuration import use_mode,get_segy_write_script,sequence_wise_SEGY, SEGY_3D, multiple_per_tape_list
 from dug_ops.DUG_ops import append_register_entry
 from GUI_classes.class_SEGY_QC_form import SEGY_QC_Form
 
@@ -280,6 +280,19 @@ class SEGY_service(object):
         self.pop_up_combo_box = pop_up_combo_box(self, "Select Sequence", combo_item_list, 'Sequence',option)
         self.pop_up_combo_box.show()
 
+    def choose_sequences(self,option):
+        seq_list = get_all_production_sequences(self.db_connection_obj)
+        disp_name_dict = {}
+        combo_item_list = []
+        for seq in seq_list:
+            key = str(seq.real_line_name)
+            data = seq
+            disp_name_dict.update({key: data})
+            combo_item_list.append(key)
+        self.disp_seq_dict = disp_name_dict
+        self.file_selection = file_selection(self, "Select Sequence", combo_item_list, 'Sequences', option)
+        self.file_selection.show()
+
 
     def get_user_name(self):
         username = get_item_through_dialogue(self.parent.parent, 'Type username or exit to exit')
@@ -301,7 +314,10 @@ class SEGY_service(object):
                     #Now check if DUG SGYT master is defined for the deliverable
                     if self.Deliverable.sgyt_master_status:
                         #print self.Deliverable.sgyt.decode('base64')
-                        self.choose_sequence(ops)
+                        if self.Deliverable.media in multiple_per_tape_list:
+                            self.choose_sequences(ops)
+                        else:
+                            self.choose_sequence(ops)
                     else:
                         logger.warning("No SGYT found for the deliverable in the database !!!")
                 elif self.Deliverable.type in SEGY_3D:
@@ -326,16 +342,38 @@ class SEGY_service(object):
                     else:
                         logger.warning("No SGYT found for the deliverable in the database !!!")
             elif caller == 'Sequence':
-                self.sequence = self.disp_seq_dict[attribute]
+                #self.sequence = self.disp_seq_dict[attribute]
+                self.sequence_list = [attribute]
                 # get min max IL and XL ranges
-                mnIL = get_item_through_dialogue(self.parent,'Minimum IL')
-                mxIL = get_item_through_dialogue(self.parent,'Maximum IL')
-                mnXL = get_item_through_dialogue(self.parent, 'Minimum XL')
-                mxXL = get_item_through_dialogue(self.parent, 'Maximum XL')
+                # mnIL = get_item_through_dialogue(self.parent,'Minimum IL')
+                # mxIL = get_item_through_dialogue(self.parent,'Maximum IL')
+                # mnXL = get_item_through_dialogue(self.parent, 'Minimum XL')
+                # mxXL = get_item_through_dialogue(self.parent, 'Maximum XL')
                 reel = get_item_through_dialogue(self.parent, 'Tape number excluding prefix')
                 self.reel = str('{0:04d}'.format(int(reel)))
-                self.IL_range = [mnIL,mxIL]
-                self.XL_range = [mnXL,mxXL]
+                self.IL_range = [0,0]# these need to be updated through PQ Man i the future
+                self.XL_range = [0,0]# These need to be updated through PQ MAn in the future
+                username = self.get_user_name()
+                if username == 'exit':
+                    pass
+                else:
+                    if len(username) !=0:
+                        self.username = username
+                        self.create_sequence_wise_sgyt()
+                    else:
+                        self.get_user_name()
+            elif caller == 'Sequences':
+                #self.sequence = self.disp_seq_dict[attribute]
+                self.sequence_list = attribute
+                # get min max IL and XL ranges
+                # mnIL = get_item_through_dialogue(self.parent,'Minimum IL')
+                # mxIL = get_item_through_dialogue(self.parent,'Maximum IL')
+                # mnXL = get_item_through_dialogue(self.parent, 'Minimum XL')
+                # mxXL = get_item_through_dialogue(self.parent, 'Maximum XL')
+                reel = get_item_through_dialogue(self.parent, 'Tape number excluding prefix')
+                self.reel = str('{0:04d}'.format(int(reel)))
+                self.IL_range = [0,0]# these need to be updated through PQ Man i the future
+                self.XL_range = [0,0]# These need to be updated through PQ MAn in the future
                 username = self.get_user_name()
                 if username == 'exit':
                     pass
@@ -512,52 +550,11 @@ class SEGY_service(object):
         return (remote_path_bin_def,remote_path_trc_def)
 
     def create_sequence_wise_sgyt(self):
-        result = self.db_connection_obj.sess.query(self.db_connection_obj.SEGY_QC_on_disk).filter(self.db_connection_obj.SEGY_QC_on_disk.deliverable_id == self.Deliverable.id).filter(self.db_connection_obj.SEGY_QC_on_disk.line_name == self.sequence.real_line_name).first()
-        if result is None:
-            sgy_file_name = create_sgyt(self.Deliverable, self.sequence, self.IL_range, self.XL_range, int(self.reel))
-            user_file_name = "user_" + sgy_file_name
-            # SFTP the template to the DUG workstation
-            # 1. check if the file already exists on the DUG workstation
-            self.dir_service.set_deliverable(self.Deliverable)
-            dir_for_checking = self.dir_service.data_dir_path_dict['masters']
-            local_path = os.path.join(os.getcwd(), 'temp', sgy_file_name)
-            remote_path = posixpath.join(dir_for_checking, sgy_file_name)
-            status = check_generic_path(self.DUG_connection_obj, remote_path)
-            logger.info("Now attempting to transfer the file to the DUG workstation...")
-            if status == 'True':
-                action = get_item_through_dialogue(self.parent, 'Now attempting to transfer the file to the DUG workstation... type y to continue, n to exit')
-                if action == 'y':
-                    SFTP_generic_file(self.DUG_connection_obj, local_path, remote_path)
-                else:
-                    logger.warning('Aborting the file transfer!!!!')
-            else:
-                SFTP_generic_file(self.DUG_connection_obj, local_path, remote_path)
-            # now create a new DAO object
-            new_obj = self.db_connection_obj.SEGY_QC_on_disk()
-            new_obj.line_name = self.sequence.real_line_name
-            new_obj.deliverable_id = self.Deliverable.id
-            new_obj.sgyt_status = True
-            new_obj.sgyt_reel_no = self.Deliverable.reel_prefix+str(self.reel)
-            new_obj.sgyt_min_il = self.IL_range[0]
-            new_obj.sgyt_max_il = self.IL_range[1]
-            new_obj.sgyt_min_xl = self.XL_range[0]
-            new_obj.sgyt_max_xl = self.XL_range[1]
-            new_obj.sgyt_fgsp = self.sequence.fgsp
-            new_obj.sgyt_lgsp = self.sequence.lgsp
-            new_obj.sgyt_min_ffid = self.sequence.fg_ffid
-            new_obj.sgyt_max_ffid = self.sequence.lg_ffid
-            new_obj.sgyt_user_path = posixpath.join(dir_for_checking, user_file_name)
-            new_obj.sgyt_unix_path = remote_path
-            new_obj.sgyt_exp_uname = self.username
-            new_obj.sgyt_time_stamp = datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y")
-            self.db_connection_obj.sess.add(new_obj)
-            self.db_connection_obj.sess.commit()
-            logger.info("The new object for SEGY on disk QC SEGY template export is now added to the database...")
-        else:
-            message = str("The SGYT file for deliverable_id : " + str(self.Deliverable.id) + ": name : " + self.Deliverable.name + ' line name: ' + self.sequence.real_line_name + " was exported by : " + result.sgyt_exp_uname + ' on : ' + result.sgyt_time_stamp + " Enter reason to reexport: ")
-            perform = change_log_creation(gui = self.parent, conn_obj=self.db_connection_obj,message = message, type_entry = "change",location = 'sgyt')
-            if perform:
-                sgy_file_name = create_sgyt(self.Deliverable, self.sequence, self.IL_range, self.XL_range, self.reel)
+        for an_item in self.sequence_list:
+            self.sequence = self.disp_seq_dict[an_item]
+            result = self.db_connection_obj.sess.query(self.db_connection_obj.SEGY_QC_on_disk).filter(self.db_connection_obj.SEGY_QC_on_disk.deliverable_id == self.Deliverable.id).filter(self.db_connection_obj.SEGY_QC_on_disk.line_name == self.sequence.real_line_name).first()
+            if result is None:
+                sgy_file_name = create_sgyt(self.Deliverable, self.sequence, self.IL_range, self.XL_range, int(self.reel))
                 user_file_name = "user_" + sgy_file_name
                 # SFTP the template to the DUG workstation
                 # 1. check if the file already exists on the DUG workstation
@@ -568,8 +565,7 @@ class SEGY_service(object):
                 status = check_generic_path(self.DUG_connection_obj, remote_path)
                 logger.info("Now attempting to transfer the file to the DUG workstation...")
                 if status == 'True':
-                    message = "File already exists on DUG system, type y to continue, n to exit"
-                    action = get_item_through_dialogue(self.parent, message)
+                    action = get_item_through_dialogue(self.parent, 'Now attempting to transfer the file to the DUG workstation... type y to continue, n to exit')
                     if action == 'y':
                         SFTP_generic_file(self.DUG_connection_obj, local_path, remote_path)
                     else:
@@ -577,25 +573,77 @@ class SEGY_service(object):
                 else:
                     SFTP_generic_file(self.DUG_connection_obj, local_path, remote_path)
                 # now create a new DAO object
-                result.sgyt_reel_no = self.Deliverable.reel_prefix+str(self.reel)
-                result.sgyt_fgsp = self.sequence.fgsp
-                result.sgyt_lgsp = self.sequence.lgsp
-                result.sgyt_min_ffid = self.sequence.fg_ffid
-                result.sgyt_max_ffid = self.sequence.lg_ffid
-                result.sgyt_min_il = self.IL_range[0]
-                result.sgyt_max_il = self.IL_range[1]
-                result.sgyt_min_xl = self.XL_range[0]
-                result.sgyt_max_xl = self.XL_range[1]
-                result.sgyt_user_path = posixpath.join(dir_for_checking, user_file_name)
-                result.sgyt_unix_path = remote_path
-                result.sgyt_exp_uname = self.username
-                result.sgyt_time_stamp = datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y")
-                if result.sgyt_approval_status is not None:
-                    # this step clears the previous status flag as this is a new file and should be checked again
-                    result.sgyt_approval_status = None
-                    result.sgyt_approver_name = None
-                    result.sgyt_approval_time = None
+                new_obj = self.db_connection_obj.SEGY_QC_on_disk()
+                new_obj.line_name = self.sequence.real_line_name
+                new_obj.deliverable_id = self.Deliverable.id
+                new_obj.sgyt_status = True
+                new_obj.sgyt_reel_no = self.Deliverable.reel_prefix+str(self.reel)
+                new_obj.sgyt_min_il = self.IL_range[0]
+                new_obj.sgyt_max_il = self.IL_range[1]
+                new_obj.sgyt_min_xl = self.XL_range[0]
+                new_obj.sgyt_max_xl = self.XL_range[1]
+                new_obj.sgyt_fgsp = self.sequence.fgsp
+                new_obj.sgyt_lgsp = self.sequence.lgsp
+                new_obj.sgyt_min_ffid = self.sequence.fg_ffid
+                new_obj.sgyt_max_ffid = self.sequence.lg_ffid
+                new_obj.sgyt_user_path = posixpath.join(dir_for_checking, user_file_name)
+                new_obj.sgyt_unix_path = remote_path
+                new_obj.sgyt_exp_uname = self.username
+                new_obj.sgyt_time_stamp = datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y")
+                new_obj.sgyt_approver_name = self.username
+                new_obj.sgyt_approver_time = datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y")
+                new_obj.sgyt_approval_status = True
+                new_obj.sgyt_imp_exp_match_flag = True
+                self.db_connection_obj.sess.add(new_obj)
                 self.db_connection_obj.sess.commit()
+                logger.info("The new object for SEGY on disk QC SEGY template export is now added to the database...")
+            else:
+                message = str("The SGYT file for deliverable_id : " + str(self.Deliverable.id) + ": name : " + self.Deliverable.name + ' line name: ' + self.sequence.real_line_name + " was exported by : " + result.sgyt_exp_uname + ' on : ' + result.sgyt_time_stamp + " Enter reason to reexport: ")
+                perform = change_log_creation(gui = self.parent, conn_obj=self.db_connection_obj,message = message, type_entry = "change",location = 'sgyt')
+                if perform:
+                    sgy_file_name = create_sgyt(self.Deliverable, self.sequence, self.IL_range, self.XL_range, self.reel)
+                    user_file_name = "user_" + sgy_file_name
+                    # SFTP the template to the DUG workstation
+                    # 1. check if the file already exists on the DUG workstation
+                    self.dir_service.set_deliverable(self.Deliverable)
+                    dir_for_checking = self.dir_service.data_dir_path_dict['masters']
+                    local_path = os.path.join(os.getcwd(), 'temp', sgy_file_name)
+                    remote_path = posixpath.join(dir_for_checking, sgy_file_name)
+                    status = check_generic_path(self.DUG_connection_obj, remote_path)
+                    logger.info("Now attempting to transfer the file to the DUG workstation...")
+                    if status == 'True':
+                        message = "File already exists on DUG system, type y to continue, n to exit"
+                        action = get_item_through_dialogue(self.parent, message)
+                        if action == 'y':
+                            SFTP_generic_file(self.DUG_connection_obj, local_path, remote_path)
+                        else:
+                            logger.warning('Aborting the file transfer!!!!')
+                    else:
+                        SFTP_generic_file(self.DUG_connection_obj, local_path, remote_path)
+                    # now create a new DAO object
+                    result.sgyt_reel_no = self.Deliverable.reel_prefix+str(self.reel)
+                    result.sgyt_fgsp = self.sequence.fgsp
+                    result.sgyt_lgsp = self.sequence.lgsp
+                    result.sgyt_min_ffid = self.sequence.fg_ffid
+                    result.sgyt_max_ffid = self.sequence.lg_ffid
+                    result.sgyt_min_il = self.IL_range[0]
+                    result.sgyt_max_il = self.IL_range[1]
+                    result.sgyt_min_xl = self.XL_range[0]
+                    result.sgyt_max_xl = self.XL_range[1]
+                    result.sgyt_user_path = posixpath.join(dir_for_checking, user_file_name)
+                    result.sgyt_unix_path = remote_path
+                    result.sgyt_exp_uname = self.username
+                    result.sgyt_time_stamp = datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y")
+                    result.sgyt_approver_name = self.username
+                    result.sgyt_approver_time = datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y")
+                    result.sgyt_approval_status = True
+                    result.sgyt_imp_exp_match_flag = True
+                    # if result.sgyt_approval_status is not None:
+                    #     # this step clears the previous status flag as this is a new file and should be checked again
+                    #     result.sgyt_approval_status = None
+                    #     result.sgyt_approver_name = None
+                    #     result.sgyt_approval_time = None
+                    self.db_connection_obj.sess.commit()
 
     def create_SEGY_3D_sgyt(self):
         result = self.db_connection_obj.sess.query(self.db_connection_obj.SEGY_QC_on_disk).filter(
