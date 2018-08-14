@@ -6,7 +6,7 @@ class bug_reporter(QtGui.QWidget):
         self.setWindowTitle('Support Request form')
         grid = QtGui.QVBoxLayout()
         browser = QtWebKit.QWebView()
-        browser.load(QtCore.QUrl('http://10.11.1.180'))
+        browser.load(QtCore.QUrl('http://10.64.1.21'))
         browser.show()
 
         grid.addWidget(browser,0)
