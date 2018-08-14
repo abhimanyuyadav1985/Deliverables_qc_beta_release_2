@@ -67,7 +67,8 @@ SEQG_dict = {
 
     },
     'coordinate_flag_list':['trc_min_cdpx','trc_min_cdpy','trc_rec_min_x','trc_rec_min_y','trc_src_min_x','trc_src_min_y'],
-    'flag_list':['sgyt_imp_exp_match_flag','trc_coordinate_zero_flag','wb_zero_flag','trc_type_flag','ffid_match_flag','sp_match_flag','il_match_flag','xl_match_flag']
+    #'flag_list':['sgyt_imp_exp_match_flag','trc_coordinate_zero_flag','wb_zero_flag','trc_type_flag','ffid_match_flag','sp_match_flag','il_match_flag','xl_match_flag']
+    'flag_list':['sgyt_imp_exp_match_flag','trc_coordinate_zero_flag','wb_zero_flag','trc_type_flag','ffid_match_flag','sp_match_flag']
 
 }
 #-----------------------------------------------------
